@@ -49,9 +49,11 @@ async function main() {
     readFile(here('./repos.json'), 'utf8'),
   ])
   const dataSafe = dataRaw.replace(/</g, '\\u003c')
+  // NOTE: use FUNCTION replacements — a string replacement would interpret
+  // "$$", "$&", etc. in the inlined JS/data as special patterns and corrupt it.
   const bundle = template
-    .replace('<!--INLINE_STYLES-->', `<style>\n${css}\n</style>`)
-    .replace('<!--INLINE_APP-->', `<script>window.__REPOS__ = ${dataSafe};</script>\n<script>\n${app}\n</script>`)
+    .replace('<!--INLINE_STYLES-->', () => `<style>\n${css}\n</style>`)
+    .replace('<!--INLINE_APP-->', () => `<script>window.__REPOS__ = ${dataSafe};</script>\n<script>\n${app}\n</script>`)
   if (bundle.includes('<!--INLINE_')) { console.error('build failed: marker left unreplaced'); process.exit(1) }
 
   // 2) Encrypt the bundle with the CEK.
@@ -78,8 +80,8 @@ async function main() {
   const gateHtml = await readFile(here('./src/gate.html'), 'utf8')
   const gateJs = (await readFile(here('./src/gate.js'), 'utf8')).replace(/<\/script/gi, '<\\/script')
   const out = gateHtml
-    .replace('{{CFG}}', JSON.stringify(cfg))
-    .replace('{{GATE_JS}}', gateJs)
+    .replace('{{CFG}}', () => JSON.stringify(cfg))
+    .replace('{{GATE_JS}}', () => gateJs)
   if (out.includes('{{CFG}}') || out.includes('{{GATE_JS}}')) { console.error('build failed: gate placeholder left'); process.exit(1) }
 
   await writeFile(here('./index.html'), out)

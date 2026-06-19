@@ -573,9 +573,162 @@ footer {
 }
 footer a { color: var(--accent-deep); border-bottom: 1px solid var(--accent-wash); }
 
+/* ================= Baru OS shell ================= */
+
+.os { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+
+.sidebar {
+  position: sticky; top: 0; align-self: start;
+  height: 100vh; display: flex; flex-direction: column;
+  padding: 22px 16px; gap: 8px;
+  background: color-mix(in oklab, var(--paper-2) 80%, var(--card));
+  border-right: 1px solid var(--line);
+}
+.os-brand { display: flex; align-items: center; gap: 11px; padding: 6px 8px 18px; }
+.os-mark {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--accent); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 19px;
+  box-shadow: var(--sh-2);
+}
+.os-name { font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
+.os-name em { font-style: italic; color: var(--accent-deep); }
+
+.os-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border: 0; border-radius: 11px; cursor: pointer;
+  background: transparent; color: var(--ink-soft); font: 13.5px var(--font-ui); text-align: left;
+  transition: background 0.18s, color 0.18s;
+}
+.nav-item svg { width: 16px; height: 16px; color: var(--faint); flex-shrink: 0; }
+.nav-item:hover { background: var(--card); color: var(--ink); }
+.nav-item[aria-current="true"] { background: var(--card-hi); color: var(--ink); box-shadow: var(--sh-1); font-weight: 500; }
+.nav-item[aria-current="true"] svg { color: var(--accent); }
+.nav-count {
+  margin-left: auto; font: 11px var(--font-mono); color: var(--faint);
+  background: var(--paper-2); border: 1px solid var(--line-soft); padding: 1px 7px; border-radius: 999px;
+}
+.nav-item[aria-current="true"] .nav-count { color: var(--accent-deep); }
+
+.sidebar-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.os-sync {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 11px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+  font: 12.5px var(--font-mono); cursor: pointer; box-shadow: var(--sh-1);
+  transition: transform 0.2s var(--ease), background 0.2s;
+}
+.os-sync:hover { transform: translateY(-2px); background: var(--card-hi); }
+.os-sync svg { width: 15px; height: 15px; color: var(--accent); }
+.os-sync.spinning svg { animation: spin 0.8s linear infinite; }
+.foot-meta { font: 10.5px var(--font-mono); color: var(--faint); padding: 0 4px; }
+
+.os-main { overflow-y: auto; height: 100vh; padding: clamp(22px, 3vw, 44px) clamp(18px, 3.5vw, 48px) 80px; }
+
+.view { display: none; animation: fade 0.3s var(--ease); }
+.view.view-active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.view-head { margin-bottom: 22px; }
+.view-title { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.7rem, 1rem + 2.2vw, 2.5rem); letter-spacing: -0.02em; margin: 0 0 16px; }
+
+/* repos controls now stick within the scrolling main column */
+.controls { position: sticky; top: calc(-1 * clamp(22px, 3vw, 44px)); z-index: 30; }
+
+/* ================= Overview ================= */
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.ov-kpis { display: flex; gap: clamp(18px, 4vw, 46px); flex-wrap: wrap; margin-bottom: 30px; }
+.ov-section-label { font: 11px var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 30px 0 14px; }
+
+.venture-card {
+  display: block; padding: 18px; border-radius: var(--radius); background: var(--card);
+  border: 1px solid var(--line-soft); box-shadow: var(--sh-1); cursor: pointer;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s;
+  border-left: 3px solid var(--vc, var(--accent));
+}
+.venture-card:hover { transform: translateY(-3px); box-shadow: var(--sh-2); }
+.venture-card h3 { margin: 0 0 12px; font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; }
+.venture-card .vc-stats { display: flex; gap: 16px; font: 12px var(--font-mono); color: var(--muted); }
+.venture-card .vc-stats b { color: var(--ink); font-weight: 700; }
+.venture-card .vc-bar { margin-top: 12px; height: 5px; border-radius: 99px; background: var(--paper-2); overflow: hidden; }
+.venture-card .vc-bar span { display: block; height: 100%; background: var(--vc, var(--accent)); border-radius: 99px; }
+
+/* ================= To-dos ================= */
+.todo-compose { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.todo-compose input {
+  flex: 1 1 280px; min-width: 200px; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 14px var(--font-ui);
+  box-shadow: var(--sh-1);
+}
+.todo-compose input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-wash); }
+.todo-compose select {
+  appearance: none; padding: 12px 34px 12px 14px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink-soft); font: 13px var(--font-mono); cursor: pointer; box-shadow: var(--sh-1);
+}
+.todo-add { padding: 0 20px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; font: 500 14px var(--font-ui); cursor: pointer; transition: transform 0.15s; }
+.todo-add:active { transform: translateY(1px); }
+
+.todo-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.todo-filters .chip { cursor: pointer; }
+.todo-filters .chip .swatch { width: 9px; height: 9px; border-radius: 50%; }
+
+.todo-group { margin-bottom: 26px; }
+.todo-group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.todo-group-head .dot { width: 11px; height: 11px; border-radius: 50%; }
+.todo-group-head h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; }
+.todo-group-head .gc { font: 11px var(--font-mono); color: var(--muted); }
+.todo-group-head .rule { flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+
+.todo {
+  display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-radius: 12px;
+  background: var(--card); border: 1px solid var(--line-soft); box-shadow: var(--sh-1); margin-bottom: 8px;
+  transition: opacity 0.2s, background 0.2s;
+}
+.todo:hover { background: var(--card-hi); }
+.todo .box {
+  width: 19px; height: 19px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--card-hi);
+  cursor: pointer; flex-shrink: 0; margin-top: 1px; display: grid; place-items: center; transition: background 0.15s, border-color 0.15s;
+}
+.todo .box svg { width: 12px; height: 12px; color: #fff; opacity: 0; }
+.todo.done .box { background: var(--sage); border-color: var(--sage); }
+.todo.done .box svg { opacity: 1; }
+.todo .txt { flex: 1; font-size: 14px; line-height: 1.45; word-break: break-word; }
+.todo.done .txt { color: var(--faint); text-decoration: line-through; }
+.todo .del { opacity: 0; border: 0; background: transparent; color: var(--faint); cursor: pointer; font-size: 16px; padding: 0 4px; transition: opacity 0.15s, color 0.15s; }
+.todo:hover .del { opacity: 1; }
+.todo .del:hover { color: var(--bad, oklch(55% 0.16 25)); }
+
+/* ================= Module placeholder ================= */
+.module-empty {
+  text-align: center; max-width: 460px; margin: 8vh auto; padding: 40px 30px;
+  border: 1.5px dashed var(--line); border-radius: 20px; background: color-mix(in oklab, var(--card) 60%, transparent);
+}
+.module-empty .me-ic { width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-wash); color: var(--accent-deep); }
+.module-empty .me-ic svg { width: 28px; height: 28px; }
+.module-empty h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; margin: 0 0 8px; }
+.module-empty p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
+.module-empty .me-note { font: 11.5px var(--font-mono); color: var(--faint); margin-top: 18px; }
+
+/* ================= responsive ================= */
+@media (max-width: 760px) {
+  .os { grid-template-columns: 1fr; }
+  .sidebar { position: sticky; top: 0; height: auto; flex-direction: row; align-items: center; flex-wrap: wrap; padding: 12px 14px; z-index: 50; }
+  .os-brand { padding: 0 8px 0 4px; }
+  .os-nav { flex-direction: row; flex: 1 1 100%; order: 3; overflow-x: auto; gap: 4px; }
+  .nav-item span:not(.nav-count) { display: none; }
+  .nav-item { padding: 9px 11px; }
+  .sidebar-foot { flex-direction: row; align-items: center; border: 0; padding: 0; margin-left: auto; }
+  .foot-meta { display: none; }
+  .os-main { height: auto; }
+  .controls { top: 0; }
+}
+
+/* ---------- entrance animation ---------- */
+/* (kept below new rules so view fade doesn't fight card reveal) */
+
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto; }
   .card { transform: none !important; }
   .reveal { opacity: 1; transform: none; }
+  .view { animation: none; }
 }

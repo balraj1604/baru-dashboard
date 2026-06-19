@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Baru's Dashboard — repositories</title>
-  <meta name="description" content="A live, organized view of every GitHub repository across all of Baru's organizations and personal account." />
+  <title>Baru OS</title>
+  <meta name="description" content="Baru's personal operating system — repositories, to-dos, email, finance across every venture." />
   <meta name="color-scheme" content="light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b9603c'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23f4efe6'%3EB%3C/text%3E%3C/svg%3E" />
 
@@ -15,72 +15,94 @@
   <!--INLINE_STYLES-->
 </head>
 <body>
-  <div class="wrap">
-    <header class="masthead">
-      <div class="masthead-top">
-        <div class="brand">
-          <img id="avatar" class="brand-avatar" alt="" />
-          <div>
-            <h1>Baru's <em>Workshop</em></h1>
-            <div class="sub">every repo, across every org · one click to open</div>
-          </div>
-        </div>
-        <button id="sync" class="sync" title="Re-pull the latest repos.json" aria-label="Sync repositories">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-            <path d="M13.6 7a5.6 5.6 0 1 0-.3 2.6" />
-            <path d="M13.8 3.2V7H10" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+  <div class="os">
+    <!-- ░░ sidebar ░░ -->
+    <aside class="sidebar">
+      <div class="os-brand">
+        <span class="os-mark">B</span>
+        <span class="os-name">Baru <em>OS</em></span>
+      </div>
+
+      <nav id="nav" class="os-nav" aria-label="Sections">
+        <button class="nav-item" data-view="overview" aria-current="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          <span>Overview</span>
+        </button>
+        <button class="nav-item" data-view="repos">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2h6l2 2v10H4z"/><path d="M6 6h4M6 9h4"/></svg>
+          <span>Repositories</span><span class="nav-count" id="nav-repos"></span>
+        </button>
+        <button class="nav-item" data-view="todos">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 4h8M5 8h8M5 12h8"/><path d="M2 4l1 1 1-1.5M2 8l1 1 1-1.5M2 12l1 1 1-1.5"/></svg>
+          <span>To-dos</span><span class="nav-count" id="nav-todos"></span>
+        </button>
+        <button class="nav-item" data-view="email">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2.5 4l5.5 4 5.5-4"/></svg>
+          <span>Email</span><span class="nav-count" id="nav-email"></span>
+        </button>
+        <button class="nav-item" data-view="finance">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2v12M5 5h4.5a2 2 0 0 1 0 4H5m0 0h5"/></svg>
+          <span>Finance</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <button id="sync" class="os-sync" title="Re-pull repos &amp; rebuild">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.6 7a5.6 5.6 0 1 0-.3 2.6"/><path d="M13.8 3.2V7H10" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Sync</span>
-          <span id="syncAgo" class="ago"></span>
         </button>
+        <div class="foot-meta"><span id="syncAgo"></span> · 🔒 encrypted</div>
       </div>
-      <div id="stats" class="stats"></div>
-    </header>
+    </aside>
 
-    <div class="controls">
-      <div class="controls-row">
-        <label class="search">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-            <circle cx="9" cy="9" r="6" /><path d="m14 14 3.5 3.5" />
-          </svg>
-          <input id="search" type="search" placeholder="Search repos, descriptions, languages…" aria-label="Search repositories" />
-        </label>
-        <button id="liveToggle" class="livetoggle" aria-pressed="false" title="Show only repos that have a live site">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <circle cx="8" cy="8" r="2" /><path d="M4.3 4.3a5.2 5.2 0 0 0 0 7.4M11.7 4.3a5.2 5.2 0 0 1 0 7.4" stroke-linecap="round" />
-          </svg>
-          <span>Live sites</span>
-          <span id="liveCount" class="ct"></span>
-        </button>
-        <div id="visSeg" class="seg" role="group" aria-label="Visibility filter">
-          <button data-vis="all" aria-pressed="true">All</button>
-          <button data-vis="public" aria-pressed="false">Public</button>
-          <button data-vis="private" aria-pressed="false">Private</button>
-        </div>
-        <div class="sortwrap">
-          <select id="sort" aria-label="Sort repositories">
-            <option value="pushed">Recently pushed</option>
-            <option value="name">Name A–Z</option>
-            <option value="stars">Most stars</option>
-          </select>
-        </div>
-      </div>
-      <div id="chips" class="chips" role="group" aria-label="Filter by organization"></div>
-    </div>
+    <!-- ░░ main ░░ -->
+    <main class="os-main">
+      <!-- OVERVIEW -->
+      <section id="view-overview" class="view view-active" aria-label="Overview"></section>
 
-    <main>
-      <div id="sections">
-        <div class="skeleton grid">
-          <div class="card"></div><div class="card"></div><div class="card"></div>
-          <div class="card"></div><div class="card"></div><div class="card"></div>
+      <!-- REPOSITORIES -->
+      <section id="view-repos" class="view" aria-label="Repositories">
+        <div class="view-head">
+          <h1 class="view-title">Repositories</h1>
+          <div id="stats" class="stats"></div>
         </div>
-      </div>
+        <div class="controls">
+          <div class="controls-row">
+            <label class="search">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 3.5 3.5"/></svg>
+              <input id="search" type="search" placeholder="Search repos, descriptions, languages…" aria-label="Search repositories" />
+            </label>
+            <button id="liveToggle" class="livetoggle" aria-pressed="false" title="Show only repos with a live site">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M4.3 4.3a5.2 5.2 0 0 0 0 7.4M11.7 4.3a5.2 5.2 0 0 1 0 7.4" stroke-linecap="round"/></svg>
+              <span>Live sites</span><span id="liveCount" class="ct"></span>
+            </button>
+            <div id="visSeg" class="seg" role="group" aria-label="Visibility filter">
+              <button data-vis="all" aria-pressed="true">All</button>
+              <button data-vis="public" aria-pressed="false">Public</button>
+              <button data-vis="private" aria-pressed="false">Private</button>
+            </div>
+            <div class="sortwrap">
+              <select id="sort" aria-label="Sort repositories">
+                <option value="pushed">Recently pushed</option>
+                <option value="name">Name A–Z</option>
+                <option value="stars">Most stars</option>
+              </select>
+            </div>
+          </div>
+          <div id="chips" class="chips" role="group" aria-label="Filter by organization"></div>
+        </div>
+        <div id="sections"></div>
+      </section>
+
+      <!-- TO-DOS -->
+      <section id="view-todos" class="view" aria-label="To-dos"></section>
+
+      <!-- EMAIL -->
+      <section id="view-email" class="view" aria-label="Email"></section>
+
+      <!-- FINANCE -->
+      <section id="view-finance" class="view" aria-label="Finance"></section>
     </main>
-
-    <footer>
-      built on the <a href="https://github.com/balraj1604/baru-dashboard" target="_blank" rel="noopener">baru-dashboard</a>
-      repo · run <code>./sync.sh</code> to pull new repos
-    </footer>
   </div>
 
   <!--INLINE_APP-->
