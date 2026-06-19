@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Baru's Dashboard — repositories</title>
+  <meta name="description" content="A live, organized view of every GitHub repository across all of Baru's organizations and personal account." />
+  <meta name="color-scheme" content="light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b9603c'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23f4efe6'%3EB%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <!--INLINE_STYLES-->
+</head>
+<body>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="brand">
+          <img id="avatar" class="brand-avatar" alt="" />
+          <div>
+            <h1>Baru's <em>Workshop</em></h1>
+            <div class="sub">every repo, across every org · one click to open</div>
+          </div>
+        </div>
+        <button id="sync" class="sync" title="Re-pull the latest repos.json" aria-label="Sync repositories">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <path d="M13.6 7a5.6 5.6 0 1 0-.3 2.6" />
+            <path d="M13.8 3.2V7H10" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Sync</span>
+          <span id="syncAgo" class="ago"></span>
+        </button>
+      </div>
+      <div id="stats" class="stats"></div>
+    </header>
+
+    <div class="controls">
+      <div class="controls-row">
+        <label class="search">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <circle cx="9" cy="9" r="6" /><path d="m14 14 3.5 3.5" />
+          </svg>
+          <input id="search" type="search" placeholder="Search repos, descriptions, languages…" aria-label="Search repositories" />
+        </label>
+        <button id="liveToggle" class="livetoggle" aria-pressed="false" title="Show only repos that have a live site">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="8" cy="8" r="2" /><path d="M4.3 4.3a5.2 5.2 0 0 0 0 7.4M11.7 4.3a5.2 5.2 0 0 1 0 7.4" stroke-linecap="round" />
+          </svg>
+          <span>Live sites</span>
+          <span id="liveCount" class="ct"></span>
+        </button>
+        <div id="visSeg" class="seg" role="group" aria-label="Visibility filter">
+          <button data-vis="all" aria-pressed="true">All</button>
+          <button data-vis="public" aria-pressed="false">Public</button>
+          <button data-vis="private" aria-pressed="false">Private</button>
+        </div>
+        <div class="sortwrap">
+          <select id="sort" aria-label="Sort repositories">
+            <option value="pushed">Recently pushed</option>
+            <option value="name">Name A–Z</option>
+            <option value="stars">Most stars</option>
+          </select>
+        </div>
+      </div>
+      <div id="chips" class="chips" role="group" aria-label="Filter by organization"></div>
+    </div>
+
+    <main>
+      <div id="sections">
+        <div class="skeleton grid">
+          <div class="card"></div><div class="card"></div><div class="card"></div>
+          <div class="card"></div><div class="card"></div><div class="card"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      built on the <a href="https://github.com/balraj1604/baru-dashboard" target="_blank" rel="noopener">baru-dashboard</a>
+      repo · run <code>./sync.sh</code> to pull new repos
+    </footer>
+  </div>
+
+  <!--INLINE_APP-->
+</body>
+</html>

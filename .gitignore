@@ -1,0 +1,9 @@
+# Local-only — contains private repo names in plaintext. NEVER commit.
+repos.json
+dashboard.source.html
+.staticrypt_out/
+.dashboard-password.txt
+
+.DS_Store
+**/.DS_Store
+node_modules/
