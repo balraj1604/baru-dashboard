@@ -26,6 +26,34 @@ function aesGcm(keyBuf, ivBuf, plainBuf) {
 
 async function exists(url) { try { await access(url); return true } catch { return false } }
 
+// Map a bold venture label in TODO.md to a venture id used by the dashboard.
+const VENTURE_MAP = {
+  peanut: "peanut", exceed: "exceed", ayuva: "ayuva", goody: "goody", kemuri: "kemuri",
+  sung: "sung", sung1975: "sung", tqhb: "tqhb", kiki: "kiki", bungo: "bungo", lombok: "lombok",
+  personal: "personal",
+}
+// 32-bit FNV hash -> stable id so a given to-do line never duplicates across builds.
+function seedId(text) { let n = 2166136261; for (let i = 0; i < text.length; i++) { n ^= text.charCodeAt(i); n = Math.imul(n, 16777619) } return "seed-" + (n >>> 0) }
+
+async function parseTodoSeeds() {
+  const f = here('./TODO.md')
+  if (!(await exists(f))) return []
+  const md = await readFile(f, 'utf8')
+  const out = []
+  for (const raw of md.split('\n')) {
+    const m = raw.match(/^\s*-\s*\[( |x|X)\]\s*(.+)$/)
+    if (!m) continue
+    const done = m[1].toLowerCase() === 'x'
+    let text = m[2].trim()
+    let venture = 'other'
+    const vb = text.match(/^\*\*([^*]+)\*\*\s*[—\-:]\s*(.+)$/) // "**Peanut** — ..."
+    if (vb) { venture = VENTURE_MAP[vb[1].trim().toLowerCase()] || 'other'; text = vb[2].trim() }
+    text = text.replace(/\*\*/g, '').trim()
+    if (text) out.push({ id: seedId(text), text, venture, done, seed: true })
+  }
+  return out
+}
+
 async function loadKeys() {
   const f = here('./.dashboard-keys.json')
   if (await exists(f)) return JSON.parse(await readFile(f, 'utf8'))
@@ -48,12 +76,15 @@ async function main() {
     readFile(here('./src/app.js'), 'utf8'),
     readFile(here('./repos.json'), 'utf8'),
   ])
+  // Seed to-dos from a local (gitignored) TODO.md — e.g. the overnight report.
+  // Baked encrypted into the bundle; never committed in plaintext.
+  const seedTodos = await parseTodoSeeds()
   const dataSafe = dataRaw.replace(/</g, '\\u003c')
   // NOTE: use FUNCTION replacements — a string replacement would interpret
   // "$$", "$&", etc. in the inlined JS/data as special patterns and corrupt it.
   const bundle = template
     .replace('<!--INLINE_STYLES-->', () => `<style>\n${css}\n</style>`)
-    .replace('<!--INLINE_APP-->', () => `<script>window.__REPOS__ = ${dataSafe};</script>\n<script>\n${app}\n</script>`)
+    .replace('<!--INLINE_APP-->', () => `<script>window.__REPOS__ = ${dataSafe};\nwindow.__SEED_TODOS__ = ${JSON.stringify(seedTodos)};</script>\n<script>\n${app}\n</script>`)
   if (bundle.includes('<!--INLINE_')) { console.error('build failed: marker left unreplaced'); process.exit(1) }
 
   // 2) Encrypt the bundle with the CEK.

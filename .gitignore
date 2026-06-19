@@ -9,3 +9,6 @@ dashboard.source.html
 .DS_Store
 **/.DS_Store
 node_modules/
+
+# Local-only — to-do seed (sensitive venture detail). Baked encrypted, never committed.
+TODO.md

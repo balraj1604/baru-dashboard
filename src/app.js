@@ -213,9 +213,25 @@ function renderChips() {
 
 // ================================================================= TO-DOS ====
 const TODO_KEY = "baru.todos.v1";
+const IMPORTED_KEY = "baru.todos.imported.v1";
 const loadTodos = () => { try { return JSON.parse(localStorage.getItem(TODO_KEY)) || []; } catch { return []; } };
 const saveTodos = (t) => localStorage.setItem(TODO_KEY, JSON.stringify(t));
-let todos = loadTodos();
+// Merge baked seed to-dos (e.g. overnight report) into the editable list once
+// each — new seeds appear on rebuild; a seed you delete stays deleted.
+function importSeedTodos(list) {
+  const seeds = window.__SEED_TODOS__ || [];
+  if (!seeds.length) return list;
+  let imported = []; try { imported = JSON.parse(localStorage.getItem(IMPORTED_KEY)) || []; } catch {}
+  const seen = new Set([...imported, ...list.map((t) => t.id)]);
+  let changed = false;
+  for (const s of seeds) {
+    if (seen.has(s.id)) continue;
+    list = [{ ...s, ts: Date.now() }, ...list]; imported.push(s.id); changed = true;
+  }
+  if (changed) { saveTodos(list); localStorage.setItem(IMPORTED_KEY, JSON.stringify(imported)); }
+  return list;
+}
+let todos = importSeedTodos(loadTodos());
 function addTodo(text, venture) { todos = [{ id: hashStr(text + Date.now()) + "" + todos.length, text, venture, done: false, ts: Date.now() }, ...todos]; saveTodos(todos); }
 function toggleTodo(id) { todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)); saveTodos(todos); }
 function delTodo(id) { todos = todos.filter((t) => t.id !== id); saveTodos(todos); }
