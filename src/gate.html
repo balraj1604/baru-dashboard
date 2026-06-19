@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Baru's Dashboard</title>
+  <meta name="color-scheme" content="light" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b9603c'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' text-anchor='middle' fill='%23f4efe6'%3EB%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <style>
+    :root{
+      --paper:oklch(91% 0.014 76); --card:oklch(96.5% 0.01 82); --card-hi:oklch(98.5% 0.008 86);
+      --ink:oklch(29% 0.025 55); --ink-soft:oklch(43% 0.022 56); --muted:oklch(56% 0.018 60);
+      --line:oklch(82% 0.014 72); --accent:oklch(60% 0.15 41); --accent-deep:oklch(50% 0.14 39);
+      --accent-wash:oklch(60% 0.15 41 / 0.12); --bad:oklch(55% 0.16 25);
+      --mono:"JetBrains Mono",ui-monospace,monospace; --ui:"Inter",-apple-system,sans-serif; --display:"Fraunces",Georgia,serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;color:var(--ink);
+      font:15px/1.6 var(--ui);-webkit-font-smoothing:antialiased;background:var(--paper);
+      background-image:radial-gradient(1100px 560px at 88% -10%,oklch(60% 0.15 41 / 0.08),transparent 60%),
+        radial-gradient(900px 620px at -5% 110%,oklch(56% 0.07 152 / 0.06),transparent 55%);}
+    .gate{width:min(92vw,400px);background:var(--card);border:1px solid var(--line);border-radius:20px;
+      padding:34px 30px 28px;box-shadow:0 4px 8px oklch(40% 0.03 60 / .08),0 22px 48px oklch(40% 0.03 60 / .16);}
+    .lock{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin:0 auto 16px;
+      background:var(--accent-wash);color:var(--accent-deep);}
+    .lock svg{width:26px;height:26px}
+    h1{margin:0;text-align:center;font-family:var(--display);font-weight:600;font-size:1.55rem;letter-spacing:-0.02em}
+    h1 em{font-style:italic;color:var(--accent-deep)}
+    .sub{text-align:center;color:var(--muted);font-family:var(--mono);font-size:11.5px;margin:6px 0 22px}
+    button{font:inherit;cursor:pointer;border-radius:11px;border:1px solid transparent;transition:transform .15s,background .2s,box-shadow .2s}
+    button:active{transform:translateY(1px)}
+    .btn-bio{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:12px;margin-bottom:14px;
+      background:var(--ink);color:var(--card-hi);font-weight:500;box-shadow:0 2px 10px oklch(29% 0.025 55 / .25)}
+    .btn-bio svg{width:18px;height:18px}
+    .or{display:flex;align-items:center;gap:10px;color:var(--muted);font:11px var(--mono);margin:4px 0 14px}
+    .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+    form{display:flex;gap:8px}
+    input{flex:1;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:var(--card-hi);
+      color:var(--ink);font:14px var(--ui)}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-wash)}
+    .btn-go{padding:0 16px;background:var(--accent);color:#fff;font-weight:500}
+    .msg{min-height:18px;text-align:center;font:11.5px var(--mono);margin-top:14px;color:var(--muted)}
+    .msg.err{color:var(--bad)}
+    .enroll{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);text-align:center;display:none}
+    .enroll p{margin:0 0 10px;color:var(--ink-soft);font-size:13px}
+    .enroll .row{display:flex;gap:8px}
+    .enroll button{flex:1;padding:10px;font-size:13px}
+    .btn-enable{background:var(--accent-wash);color:var(--accent-deep);border-color:oklch(60% 0.15 41 / .35)}
+    .btn-skip{background:transparent;color:var(--muted);border-color:var(--line)}
+    .hidden{display:none!important}
+    .spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <main class="gate" role="dialog" aria-label="Unlock dashboard">
+    <div class="lock" aria-hidden="true">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 6V4.5a4 4 0 0 1 8 0V6h.5A1.5 1.5 0 0 1 14 7.5v6A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-6A1.5 1.5 0 0 1 3.5 6H4Zm1.5 0h5V4.5a2.5 2.5 0 0 0-5 0V6Z"/></svg>
+    </div>
+    <h1>Baru's <em>Workshop</em></h1>
+    <div class="sub">locked · unlock to view repositories</div>
+
+    <button id="bio" class="btn-bio hidden" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 7V5a3 3 0 0 1 3-3h2M22 7V5a3 3 0 0 0-3-3h-2M2 17v2a3 3 0 0 0 3 3h2M22 17v2a3 3 0 0 1-3 3h-2"/><path d="M8 11v1m8-1v1M8.5 16s1 1.5 3.5 1.5S15.5 16 15.5 16M12 9v4"/></svg>
+      <span>Unlock with Face ID</span>
+    </button>
+
+    <div id="or" class="or hidden">password</div>
+
+    <form id="pwForm" autocomplete="off">
+      <input id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" />
+      <button class="btn-go" type="submit">Unlock</button>
+    </form>
+
+    <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+    <div id="enroll" class="enroll">
+      <p>Add <strong>Face ID</strong> on this device for next time?</p>
+      <div class="row">
+        <button id="enableBio" class="btn-enable" type="button">Enable Face ID</button>
+        <button id="skipBio" class="btn-skip" type="button">Skip</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="application/json" id="cfg">{{CFG}}</script>
+  <script>{{GATE_JS}}</script>
+</body>
+</html>

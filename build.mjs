@@ -1,70 +1,89 @@
 #!/usr/bin/env node
-// build.mjs — bundle the dashboard into ONE self-contained HTML (inlining CSS,
-// JS, and the repos data), then staticrypt-encrypt it to index.html.
+// build.mjs — bundle the dashboard into one self-contained HTML, AES-256-GCM
+// encrypt it with a stable Content Encryption Key (CEK), and wrap that CEK with
+// the password. The result is index.html: a small unlock gate + the encrypted
+// payload. Passkey (Face ID) wrapping of the same CEK happens in the browser at
+// enrollment time and is stored in localStorage — see src/gate.js.
 //
-// Why: the published page is on a PUBLIC repo (free GitHub Pages), but the data
-// lists private repo names. Baking the data in and encrypting the whole page
-// means only someone with the password can read any of it. repos.json and the
-// unencrypted bundle stay local-only (gitignored) and are NEVER committed.
-//
-// Requires STATICRYPT_PASSWORD in the environment (sync.sh supplies it from the
-// local, gitignored .dashboard-password.txt).
+// Stable across builds (so existing passkey enrollments keep working):
+//   .dashboard-keys.json  -> { cek, prfSalt }   (gitignored, local only)
+//   .dashboard-password.txt -> the recovery password (gitignored)
+// Everything sensitive stays local; only the encrypted index.html is committed.
 
-import { readFile, writeFile, copyFile, rm } from 'node:fs/promises'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
+import { readFile, writeFile, access } from 'node:fs/promises'
+import crypto from 'node:crypto'
 
-const runFile = promisify(execFile)
 const here = (p) => new URL(p, import.meta.url)
+const ITER = 600000 // PBKDF2-HMAC-SHA256 rounds for the password wrap
+const b64 = (b) => Buffer.from(b).toString('base64')
+
+// AES-256-GCM, output = ciphertext||authTag (matches WebCrypto's format).
+function aesGcm(keyBuf, ivBuf, plainBuf) {
+  const c = crypto.createCipheriv('aes-256-gcm', keyBuf, ivBuf)
+  const ct = Buffer.concat([c.update(plainBuf), c.final()])
+  return Buffer.concat([ct, c.getAuthTag()])
+}
+
+async function exists(url) { try { await access(url); return true } catch { return false } }
+
+async function loadKeys() {
+  const f = here('./.dashboard-keys.json')
+  if (await exists(f)) return JSON.parse(await readFile(f, 'utf8'))
+  const keys = { cek: b64(crypto.randomBytes(32)), prfSalt: b64(crypto.randomBytes(32)) }
+  await writeFile(f, JSON.stringify(keys, null, 2) + '\n')
+  console.error('> generated new CEK + prfSalt (.dashboard-keys.json)')
+  return keys
+}
 
 async function main() {
-  const password = process.env.STATICRYPT_PASSWORD
-  if (!password) {
-    console.error('build failed: STATICRYPT_PASSWORD not set (see .dashboard-password.txt)')
-    process.exit(1)
-  }
+  const password = (await readFile(here('./.dashboard-password.txt'), 'utf8')).trim()
+  if (!password) { console.error('build failed: empty .dashboard-password.txt'); process.exit(1) }
+  const keys = await loadKeys()
+  const cek = Buffer.from(keys.cek, 'base64')
 
+  // 1) Build the self-contained dashboard (inline css + app + data).
   const [template, css, app, dataRaw] = await Promise.all([
     readFile(here('./src/index.html'), 'utf8'),
     readFile(here('./src/styles.css'), 'utf8'),
     readFile(here('./src/app.js'), 'utf8'),
     readFile(here('./repos.json'), 'utf8'),
   ])
-
-  // Escape every '<' in the JSON so an embedded "</script>" (or "<!--") can't
-  // break out of the inline <script>. < is valid JSON and parses normally.
   const dataSafe = dataRaw.replace(/</g, '\\u003c')
-
-  const bundled = template
+  const bundle = template
     .replace('<!--INLINE_STYLES-->', `<style>\n${css}\n</style>`)
-    .replace(
-      '<!--INLINE_APP-->',
-      `<script>window.__REPOS__ = ${dataSafe};</script>\n<script>\n${app}\n</script>`,
-    )
+    .replace('<!--INLINE_APP-->', `<script>window.__REPOS__ = ${dataSafe};</script>\n<script>\n${app}\n</script>`)
+  if (bundle.includes('<!--INLINE_')) { console.error('build failed: marker left unreplaced'); process.exit(1) }
 
-  if (bundled.includes('<!--INLINE_STYLES-->') || bundled.includes('<!--INLINE_APP-->')) {
-    console.error('build failed: a template marker was not replaced')
-    process.exit(1)
+  // 2) Encrypt the bundle with the CEK.
+  const payloadIv = crypto.randomBytes(12)
+  const payload = aesGcm(cek, payloadIv, Buffer.from(bundle, 'utf8'))
+
+  // 3) Wrap the CEK with the password (PBKDF2 -> AES-GCM).
+  const pwSalt = crypto.randomBytes(16)
+  const pwIv = crypto.randomBytes(12)
+  const pwKey = crypto.pbkdf2Sync(password, pwSalt, ITER, 32, 'sha256')
+  const pwWrappedCEK = aesGcm(pwKey, pwIv, cek)
+
+  const cfg = {
+    payload: payload.toString('base64'),
+    payloadIv: b64(payloadIv),
+    pwWrappedCEK: pwWrappedCEK.toString('base64'),
+    pwSalt: b64(pwSalt),
+    pwIv: b64(pwIv),
+    iter: ITER,
+    prfSalt: keys.prfSalt,
   }
 
-  await writeFile(here('./dashboard.source.html'), bundled)
-  console.error(`> bundled ${(bundled.length / 1024).toFixed(0)} KB (css + app + data inlined)`)
+  // 4) Assemble the gate page: gate.html + inlined gate.js + cfg JSON.
+  const gateHtml = await readFile(here('./src/gate.html'), 'utf8')
+  const gateJs = (await readFile(here('./src/gate.js'), 'utf8')).replace(/<\/script/gi, '<\\/script')
+  const out = gateHtml
+    .replace('{{CFG}}', JSON.stringify(cfg))
+    .replace('{{GATE_JS}}', gateJs)
+  if (out.includes('{{CFG}}') || out.includes('{{GATE_JS}}')) { console.error('build failed: gate placeholder left'); process.exit(1) }
 
-  // Encrypt: client-side password gate. Output keeps the input filename.
-  const outDir = './.staticrypt_out'
-  await rm(here(outDir), { recursive: true, force: true })
-  await runFile('npx', ['-y', 'staticrypt', 'dashboard.source.html', '--short', '-d', outDir], {
-    cwd: new URL('./', import.meta.url),
-    env: { ...process.env, STATICRYPT_PASSWORD: password },
-    maxBuffer: 64 * 1024 * 1024,
-  })
-
-  await copyFile(here(`${outDir}/dashboard.source.html`), here('./index.html'))
-  await rm(here(outDir), { recursive: true, force: true })
-  console.error('> wrote encrypted index.html (password-gated)')
+  await writeFile(here('./index.html'), out)
+  console.error(`> wrote index.html — ${(out.length / 1024).toFixed(0)} KB (Face ID + password gate, encrypted payload)`)
 }
 
-main().catch((e) => {
-  console.error('build failed:', e?.message || e)
-  process.exit(1)
-})
+main().catch((e) => { console.error('build failed:', e?.message || e); process.exit(1) })

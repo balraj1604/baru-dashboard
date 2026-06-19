@@ -1,8 +1,10 @@
-# Local-only — contains private repo names in plaintext. NEVER commit.
+# Local-only — plaintext data + crypto keys. NEVER commit.
 repos.json
 dashboard.source.html
-.staticrypt_out/
 .dashboard-password.txt
+.dashboard-keys.json
+.staticrypt_out/
+.staticrypt.json
 
 .DS_Store
 **/.DS_Store
